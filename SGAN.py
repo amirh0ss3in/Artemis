@@ -1,6 +1,7 @@
 from keras import backend
 from keras.optimizers import Adam
-from keras.models import Model, Input, Dense, Reshape, Flatten, Conv2D, Conv2DTranspose, LeakyReLU, Dropout, Lambda, Activation
+from keras.models import Model
+from keras.layers import Input, Dense, Reshape, Flatten, Conv2D, Conv2DTranspose, LeakyReLU, Dropout, Lambda, Activation
 import numpy as np
 from numpy import zeros, ones, asarray
 from numpy.random import randn , randint
