@@ -65,17 +65,17 @@ trainY= np.argmax(trainY, axis=-1)
 # resize the data
 xtr=list()
 for i in trainX:    
-    res = cv2.resize(i , dsize=(56, 56), interpolation=cv2.INTER_CUBIC)
+    res = cv2.resize(i , dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
     res=np.dot(res, [0.299, 0.587, 0.114])
-    res=np.reshape(res,[56, 56,1])
+    res=np.reshape(res,[256, 256,1])
     xtr.append(res)
 xtr=np.array(xtr)
 
 xte=list()
 for i in testX:    
-    res = cv2.resize(i , dsize=(56, 56), interpolation=cv2.INTER_CUBIC)
+    res = cv2.resize(i , dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
     res=np.dot(res, [0.299, 0.587, 0.114])
-    res=np.reshape(res,[56, 56,1])
+    res=np.reshape(res,[256, 256,1])
     xte.append(res)
 xte=np.array(xte)
 
@@ -92,17 +92,17 @@ def custom_activation(output):
     return result
 
 # define the standalone supervised and unsupervised discriminator models
-def define_discriminator(in_shape=(56,56,1), n_classes=2):
+def define_discriminator(in_shape=(256,256,1), n_classes=2):
     # image input
     in_image = Input(shape=in_shape)
     # downsample
-    x = Conv2D(256, (5,5), strides=(2,2), padding='same')(in_image)
+    x = Conv2D(128, (5,5), strides=(2,2), padding='same')(in_image)
     x = LeakyReLU(alpha=0.2)(x)
     # downsample
-    x = Conv2D(256, (5,5), strides=(2,2), padding='same')(x)
+    x = Conv2D(128, (5,5), strides=(1,1), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(x)
     # downsample
-    x = Conv2D(256, (5,5), strides=(2,2), padding='same')(x)
+    x = Conv2D(128, (5,5), strides=(1,1), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(x)
     # flatten feature maps
     x = Flatten()(x)
@@ -127,18 +127,18 @@ def define_generator(latent_dim):
     # image generator input
     in_lat = Input(shape=(latent_dim,))
     # foundation for 14x14 image
-    n_nodes = 256 * 14 * 14
+    n_nodes = 64* 64 * 64
     gen = Dense(n_nodes)(in_lat)
     gen = LeakyReLU(alpha=0.2)(gen)
-    gen = Reshape((14, 14, 256))(gen)
+    gen = Reshape((64, 64, 64))(gen)
     # upsample to 28x28
-    gen = Conv2DTranspose(256, (4,4), strides=(2,2), padding='same')(gen)
+    gen = Conv2DTranspose(64, (4,4), strides=(2,2), padding='same')(gen)
     gen = LeakyReLU(alpha=0.2)(gen)
     # upsample to 56x56
-    gen = Conv2DTranspose(256, (8,8), strides=(2,2), padding='same')(gen)
+    gen = Conv2DTranspose(64, (4,4), strides=(2,2), padding='same')(gen)
     gen = LeakyReLU(alpha=0.2)(gen)
     # output
-    out_layer = Conv2D(1, (14,14), activation='tanh', padding='same')(gen)
+    out_layer = Conv2D(1, (64,64), activation='tanh', padding='same')(gen)
     # define model
     model = Model(in_lat, out_layer)
     return model
@@ -263,6 +263,7 @@ def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=10
         X_gan, y_gan = generate_latent_points(latent_dim, n_batch), ones((n_batch, 1))
         g_loss = gan_model.train_on_batch(X_gan, y_gan)
         # summarize loss on this batch
+        print('>%d, c[%.3f,%.0f], d[%.3f,%.3f], g[%.3f]' % (i+1, c_loss, c_acc*100, d_loss1, d_loss2, g_loss))
         # plot loss over each step
         # evaluate the model performance every so often
         if (i+1) % (bat_per_epo * 1) == 0:
