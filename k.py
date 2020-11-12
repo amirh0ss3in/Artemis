@@ -9,10 +9,13 @@ from sklearn.metrics import classification_report
 from keras.utils import to_categorical
 import cv2
 
-x= np.load(r'C:\Users\Amirhossein\Desktop\dd\k_x.npy')
-y= np.load(r'C:\Users\Amirhossein\Desktop\dd\k_y.npy')
+x= np.load('data_kaggle.npy')
+y= np.load('label_kaggle.npy')
 
-# print(x.shape,y.shape)
+print(x.shape,y.shape)
+
+
+
 n=0
 p=0
 for i in y:
@@ -23,14 +26,11 @@ for i in y:
 print(n,p)
 
 y=to_categorical(y)
-d=list()
-for i in x:
-    d.append(cv2.cvtColor(i,cv2.COLOR_GRAY2RGB))
-d=np.array(d)
-print(d.shape)
+
 
 from sklearn.model_selection import train_test_split
-data_train, data_test, labels_train, labels_test = train_test_split(d, y, test_size=0.20, random_state=42)
+data_train, data_test, labels_train, labels_test = train_test_split(x, y, test_size=0.20, random_state=42)
+
 
 def xception_classifier(in_shape=(256,256,3)):    
     model = xception.Xception(weights='imagenet', include_top=False, input_shape=in_shape)
@@ -44,4 +44,7 @@ def xception_classifier(in_shape=(256,256,3)):
     return model
 
 model=xception_classifier()
-history = model.fit(data_train,labels_train ,validation_data=(data_test,labels_test),batch_size=4, epochs=10 )
+history = model.fit(data_train,labels_train ,validation_data=(data_test,labels_test),batch_size=4, epochs=30 )
+y_pred = model.predict(data_test, batch_size=2, verbose=1)
+y_pred_bool = np.argmax(y_pred, axis=1)
+print(classification_report(np.argmax(labels_test, axis=1), y_pred_bool)) 
