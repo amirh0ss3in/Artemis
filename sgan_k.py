@@ -114,12 +114,12 @@ def define_discriminator(in_shape=(256,256,1), n_classes=2):
     c_out_layer = Activation('softmax')(x)
     # define and compile supervised discriminator model
     c_model = Model(in_image, c_out_layer)
-    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.0002, beta_1=0.5), metrics=['accuracy'])
+    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.1), metrics=['accuracy'])
     # unsupervised output
     d_out_layer = Lambda(custom_activation)(x)
     # define and compile unsupervised discriminator model
     d_model = Model(in_image, d_out_layer)
-    d_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0002, beta_1=0.5))
+    d_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.1))
     return d_model, c_model
 
 # define the standalone generator model
@@ -152,7 +152,7 @@ def define_gan(g_model, d_model):
     # define gan model as taking noise and outputting a classification
     model = Model(g_model.input, gan_output)
     # compile model
-    opt = Adam(lr=0.0002, beta_1=0.5)
+    opt = Adam(lr=0.00002, beta_1=0.2)
     model.compile(loss='binary_crossentropy', optimizer=opt)
     return model
 
@@ -238,7 +238,7 @@ def summarize_performance(step, g_model, c_model, latent_dim, dataset, n_samples
 
 
 # train the generator and discriminator
-def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=100, n_batch=2,l_d=list(),l_g=list(),l_c=list()):
+def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=20, n_batch=2,l_d=list(),l_g=list(),l_c=list()):
     # select supervised dataset
     X_sup, y_sup = select_supervised_samples(dataset)
     print(X_sup.shape, y_sup.shape)
