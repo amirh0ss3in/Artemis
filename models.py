@@ -5,7 +5,7 @@ import cv2
 CT_NonCOVID=np.load('/content/drive/My Drive/dataset/CT_NonCOVID.npy',allow_pickle=True)
 CT_COVID= np.load('/content/drive/My Drive/dataset/CT_COVID.npy',allow_pickle=True)
 
-P=256
+P=480
 
 def read(s):
     d=list()
@@ -87,9 +87,8 @@ train=combine(rs(split(CT_COVID,'/content/drive/My Drive/dataset/trainCT_COVID.c
 test=combine(rs(split(CT_COVID,'/content/drive/My Drive/dataset/testCT_COVID.csv')),rs(split(CT_NonCOVID,'/content/drive/My Drive/dataset/testCT_NonCOVID.csv')))
 val= combine(rs(split(CT_COVID,'/content/drive/My Drive/dataset/valCT_COVID.csv')),rs(split(CT_NonCOVID,'/content/drive/My Drive/dataset/valCT_NonCOVID.csv')))
 
-aug = image.ImageDataGenerator(rotation_range=20, zoom_range=0.5,
-	width_shift_range=0.2, height_shift_range=0.2, shear_range=0.1,
-	horizontal_flip=True, brightness_range= (0,0.5) )
+aug = image.ImageDataGenerator(rotation_range=10, zoom_range=0.5,
+	horizontal_flip=True)
 
 def xception_classifier(in_shape=(P,P,3)):    
     model = xception.Xception(weights='imagenet', include_top=False, input_shape=in_shape)
@@ -99,7 +98,7 @@ def xception_classifier(in_shape=(P,P,3)):
     out2 = new_layer2(flatten(model.output))
     model = Model(inp2, out2)
     model.summary(line_length=150)
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.0002 , beta_1=0.5) , metrics=['accuracy',tf.keras.metrics.AUC()]) 
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.00001 , beta_1=0.5) , metrics=['accuracy',tf.keras.metrics.AUC(),tf.keras.metrics.Precision(),tf.keras.metrics.Recall()]) 
     return model
 
 
@@ -111,11 +110,11 @@ def resnet_classifier(in_shape=(P,P,3)):
     out2 = new_layer2(flatten(model.output))
     model = Model(inp2, out2)
     model.summary(line_length=150)
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.0001) , metrics=['accuracy',tf.keras.metrics.AUC()]) 
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.0001) , metrics=['accuracy',tf.keras.metrics.AUC(),tf.keras.metrics.Precision(),tf.keras.metrics.Recall()]) 
     return model
 
 BS=4
-EPOCHS=40
+EPOCHS=10
 model=xception_classifier()
 
 # history = model.fit_generator(aug.flow(join(train,val)[0], to_categorical(join(train,val)[1]), batch_size=BS ) ,
