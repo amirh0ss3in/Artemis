@@ -1,4 +1,93 @@
 import numpy as np
+import csv 
+import cv2
+
+CT_NonCOVID=np.load('/content/drive/My Drive/dataset/CT_NonCOVID.npy',allow_pickle=True)
+CT_COVID= np.load('/content/drive/My Drive/dataset/CT_COVID.npy',allow_pickle=True)
+
+P=256
+
+def read(s):
+    d=list()
+    with open(s,'r') as csvfile: 
+        reader = csv.reader(csvfile, delimiter=',', quotechar='|') 
+        for row in reader:
+            d.append(row[0])
+    return np.array(d)
+
+def split(d,s):
+    data=list()
+    for i in d:
+        if i[1] in read(s):
+            data.append(i[0])
+    return np.array(data)
+
+def rs(a):
+    x=list()
+    for i in a:    
+        res = cv2.resize(i , dsize=(P,P), interpolation=cv2.INTER_CUBIC)
+        x.append(res)
+    x=np.array(x)
+    return x
+
+def combine(positive,negative):
+    data , label=list() , list()
+    for i in range(len(positive)):
+        label.append(1)
+    for i in range(len(negative)):
+        label.append(0)
+    for i in positive:
+        data.append(i)
+    for i in negative:
+        data.append(i)
+    return np.array(data),np.array(label)
+
+
+# print('trainCT_COVID:',rs(split(CT_COVID,'trainCT_COVID.csv')).shape)
+# print('testCT_COVID:',rs(split(CT_COVID,'testCT_COVID.csv')).shape)
+# print('valCT_COVID:',rs(split(CT_COVID,'valCT_COVID.csv')).shape)
+# print('trainCT_NonCOVID:',rs(split(CT_NonCOVID,'trainCT_NonCOVID.csv')).shape)
+# print('testCT_NonCOVID:',rs(split(CT_NonCOVID,'testCT_NonCOVID.csv')).shape)
+# print('valCT_NonCOVID:',rs(split(CT_NonCOVID,'valCT_NonCOVID.csv')).shape)
+
+
+# train=combine(rs(split(CT_COVID,'trainCT_COVID.csv')),rs(split(CT_NonCOVID,'trainCT_NonCOVID.csv')))
+# test=combine(rs(split(CT_COVID,'testCT_COVID.csv')),rs(split(CT_NonCOVID,'testCT_NonCOVID.csv')))
+# val= combine(rs(split(CT_COVID,'valCT_COVID.csv')),rs(split(CT_NonCOVID,'valCT_NonCOVID.csv')))
+
+def join(input1,input2):
+    data=list()
+    label=list()
+    for i in input1[0]:
+        data.append(i)
+    for i in input2[0]:
+        data.append(i)
+    for i in input1[1]:
+        label.append(i)
+    for i in input2[1]:
+        label.append(i)
+    return np.array(data) , np.array(label)
+    
+
+import numpy as np
+import keras
+from keras.models import Model
+from keras.layers import Dense,Flatten
+from keras.applications import xception 
+from keras.optimizers import Adam
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report
+from keras.utils import to_categorical
+import cv2
+from keras.applications import resnet50 , DenseNet201 
+from keras.preprocessing import image
+import tensorflow as tf
+
+train=combine(rs(split(CT_COVID,'/content/drive/My Drive/dataset/trainCT_COVID.csv')),rs(split(CT_NonCOVID,'/content/drive/My Drive/dataset/trainCT_NonCOVID.csv')))
+test=combine(rs(split(CT_COVID,'/content/drive/My Drive/dataset/testCT_COVID.csv')),rs(split(CT_NonCOVID,'/content/drive/My Drive/dataset/testCT_NonCOVID.csv')))
+val= combine(rs(split(CT_COVID,'/content/drive/My Drive/dataset/valCT_COVID.csv')),rs(split(CT_NonCOVID,'/content/drive/My Drive/dataset/valCT_NonCOVID.csv')))
+
+import numpy as np
 import keras
 from keras.models import Model
 from keras.layers import Dense,Flatten
@@ -9,28 +98,8 @@ from sklearn.metrics import classification_report
 from keras.utils import to_categorical
 import cv2
 from keras.applications import resnet50 
-
-x= np.load('/content/drive/My Drive/kaggle covid/data_kaggle.npy')
-y= np.load('/content/drive/My Drive/kaggle covid/label_kaggle.npy')
-
-print(x.shape,y.shape)
-
-
-
-n=0
-p=0
-for i in y:
-    if i==0:
-        n+=1
-    if i==1:
-        p+=1
-print(n,p)
-
-y=to_categorical(y)
-
-
 from sklearn.model_selection import train_test_split
-  
+ 
 from keras import backend
 from keras.optimizers import Adam
 from keras.models import Model
@@ -57,10 +126,9 @@ from sklearn.metrics import classification_report
 
 
 
-trainX, testX, trainY, testY = train_test_split(x, y, test_size=0.20, random_state=42)
+trainX, testX, trainY, testY = join(train,val)[0],test[0],join(train,val)[1],test[1]
 
-testY= np.argmax(testY, axis=-1)
-trainY= np.argmax(trainY, axis=-1)
+
 
 # resize the data
 xtr=list()
@@ -72,7 +140,7 @@ for i in trainX:
 xtr=np.array(xtr)
 
 xte=list()
-for i in testX:    
+for i in test[0]:    
     res = cv2.resize(i , dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
     res=np.dot(res, [0.299, 0.587, 0.114])
     res=np.reshape(res,[256, 256,1])
