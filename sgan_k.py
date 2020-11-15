@@ -164,18 +164,18 @@ def define_discriminator(in_shape=(256,256,1), n_classes=2):
     # image input
     in_image = Input(shape=in_shape)
     # downsample
-    x = Conv2D(128, (5,5), strides=(2,2), padding='same')(in_image)
+    x = Conv2D(64, (5,5), strides=(1,1), padding='same')(in_image)
     x = LeakyReLU(alpha=0.2)(x)
     # downsample
-    x = Conv2D(128, (5,5), strides=(1,1), padding='same')(x)
+    x = Conv2D(64, (5,5), strides=(2,2), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(x)
     # downsample
-    x = Conv2D(128, (5,5), strides=(1,1), padding='same')(x)
+    x = Conv2D(64, (5,5), strides=(4,4), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(x)
     # flatten feature maps
     x = Flatten()(x)
     # dropout
-    x = Dropout(0.4)(x)
+    # x = Dropout(0.4)(x)
     # output layer nodes
     x = Dense(n_classes)(x)
     # supervised output
@@ -187,7 +187,7 @@ def define_discriminator(in_shape=(256,256,1), n_classes=2):
     d_out_layer = Lambda(custom_activation)(x)
     # define and compile unsupervised discriminator model
     d_model = Model(in_image, d_out_layer)
-    d_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.1))
+    d_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.5))
     return d_model, c_model
 
 # define the standalone generator model
@@ -195,10 +195,10 @@ def define_generator(latent_dim):
     # image generator input
     in_lat = Input(shape=(latent_dim,))
     # foundation for 14x14 image
-    n_nodes = 64* 64 * 64
+    n_nodes = 128* 64 * 64
     gen = Dense(n_nodes)(in_lat)
     gen = LeakyReLU(alpha=0.2)(gen)
-    gen = Reshape((64, 64, 64))(gen)
+    gen = Reshape((64, 64, 128))(gen)
     # upsample to 28x28
     gen = Conv2DTranspose(64, (4,4), strides=(2,2), padding='same')(gen)
     gen = LeakyReLU(alpha=0.2)(gen)
@@ -220,7 +220,7 @@ def define_gan(g_model, d_model):
     # define gan model as taking noise and outputting a classification
     model = Model(g_model.input, gan_output)
     # compile model
-    opt = Adam(lr=0.00002, beta_1=0.2)
+    opt = Adam(lr=0.00001, beta_1=0.5)
     model.compile(loss='binary_crossentropy', optimizer=opt)
     return model
 
