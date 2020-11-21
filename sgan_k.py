@@ -119,7 +119,7 @@ import keras
 from keras.models import Model
 from keras.layers import Dense,Flatten
 from keras.applications import resnet50 
-from keras.optimizers import Adam
+from keras.optimizers import Adam 
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import classification_report
@@ -133,17 +133,17 @@ trainX, testX, trainY, testY = join(train,val)[0],test[0],join(train,val)[1],tes
 # resize the data
 xtr=list()
 for i in trainX:    
-    res = cv2.resize(i , dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
+    res = cv2.resize(i , dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
     res=np.dot(res, [0.299, 0.587, 0.114])
-    res=np.reshape(res,[256, 256,1])
+    res=np.reshape(res,[128, 128,1])
     xtr.append(res)
 xtr=np.array(xtr)
 
 xte=list()
 for i in test[0]:    
-    res = cv2.resize(i , dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
+    res = cv2.resize(i , dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
     res=np.dot(res, [0.299, 0.587, 0.114])
-    res=np.reshape(res,[256, 256,1])
+    res=np.reshape(res,[128, 128,1])
     xte.append(res)
 xte=np.array(xte)
 
@@ -160,17 +160,17 @@ def custom_activation(output):
     return result
 
 # define the standalone supervised and unsupervised discriminator models
-def define_discriminator(in_shape=(256,256,1), n_classes=2):
+def define_discriminator(in_shape=(128,128,1), n_classes=2):
     # image input
     in_image = Input(shape=in_shape)
     # downsample
-    x = Conv2D(64, (5,5), strides=(1,1), padding='same')(in_image)
+    x = Conv2D(128, (5,5), strides=(1,1), padding='same')(in_image)
     x = LeakyReLU(alpha=0.2)(x)
     # downsample
-    x = Conv2D(64, (5,5), strides=(2,2), padding='same')(x)
+    x = Conv2D(128, (5,5), strides=(2,2), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(x)
     # downsample
-    x = Conv2D(64, (5,5), strides=(4,4), padding='same')(x)
+    x = Conv2D(128, (5,5), strides=(2,2), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(x)
     # flatten feature maps
     x = Flatten()(x)
@@ -182,12 +182,12 @@ def define_discriminator(in_shape=(256,256,1), n_classes=2):
     c_out_layer = Activation('softmax')(x)
     # define and compile supervised discriminator model
     c_model = Model(in_image, c_out_layer)
-    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.1), metrics=['accuracy'])
+    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.5), metrics=['accuracy'])
     # unsupervised output
     d_out_layer = Lambda(custom_activation)(x)
     # define and compile unsupervised discriminator model
     d_model = Model(in_image, d_out_layer)
-    d_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.5))
+    d_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.00002, beta_1=0.7))
     return d_model, c_model
 
 # define the standalone generator model
@@ -195,18 +195,18 @@ def define_generator(latent_dim):
     # image generator input
     in_lat = Input(shape=(latent_dim,))
     # foundation for 14x14 image
-    n_nodes = 128* 64 * 64
+    n_nodes = 1024* 32 * 32
     gen = Dense(n_nodes)(in_lat)
     gen = LeakyReLU(alpha=0.2)(gen)
-    gen = Reshape((64, 64, 128))(gen)
+    gen = Reshape((32, 32, 1024))(gen)
     # upsample to 28x28
-    gen = Conv2DTranspose(64, (4,4), strides=(2,2), padding='same')(gen)
-    gen = LeakyReLU(alpha=0.2)(gen)
+    gen = Conv2DTranspose(512, (8,8), strides=(2,2), padding='same')(gen)
+    gen = LeakyReLU(alpha=0.4)(gen)
     # upsample to 56x56
-    gen = Conv2DTranspose(64, (4,4), strides=(2,2), padding='same')(gen)
-    gen = LeakyReLU(alpha=0.2)(gen)
+    gen = Conv2DTranspose(512, (8,8), strides=(2,2), padding='same')(gen)
+    gen = LeakyReLU(alpha=0.4)(gen)
     # output
-    out_layer = Conv2D(1, (64,64), activation='tanh', padding='same')(gen)
+    out_layer = Conv2D(1, (32,32), activation='tanh', padding='same')(gen)
     # define model
     model = Model(in_lat, out_layer)
     return model
@@ -220,7 +220,7 @@ def define_gan(g_model, d_model):
     # define gan model as taking noise and outputting a classification
     model = Model(g_model.input, gan_output)
     # compile model
-    opt = Adam(lr=0.00001, beta_1=0.5)
+    opt = Adam(lr=0.00001, beta_1=0.7)
     model.compile(loss='binary_crossentropy', optimizer=opt)
     return model
 
@@ -276,7 +276,7 @@ def generate_fake_samples(generator, latent_dim, n_samples):
     return images, y
 
 # generate samples and save as a plot and save the model
-def summarize_performance(step, g_model, c_model, latent_dim, dataset, n_samples=1000):
+def summarize_performance(step, g_model, c_model, latent_dim, dataset, n_samples=100):
     # prepare fake examples
     X, _ = generate_fake_samples(g_model, latent_dim, n_samples)
     # scale from [-1,1] to [0,1]
