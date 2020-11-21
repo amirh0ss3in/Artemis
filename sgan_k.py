@@ -200,10 +200,10 @@ def define_generator(latent_dim):
     gen = LeakyReLU(alpha=0.2)(gen)
     gen = Reshape((32, 32, 1024))(gen)
     # upsample to 28x28
-    gen = Conv2DTranspose(512, (8,8), strides=(2,2), padding='same')(gen)
+    gen = Conv2DTranspose(256, (8,8), strides=(2,2), padding='same')(gen)
     gen = LeakyReLU(alpha=0.4)(gen)
     # upsample to 56x56
-    gen = Conv2DTranspose(512, (8,8), strides=(2,2), padding='same')(gen)
+    gen = Conv2DTranspose(256, (8,8), strides=(2,2), padding='same')(gen)
     gen = LeakyReLU(alpha=0.4)(gen)
     # output
     out_layer = Conv2D(1, (32,32), activation='tanh', padding='same')(gen)
@@ -306,7 +306,7 @@ def summarize_performance(step, g_model, c_model, latent_dim, dataset, n_samples
 
 
 # train the generator and discriminator
-def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=100, n_batch=8,l_d=list(),l_g=list(),l_c=list()):
+def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=100, n_batch=4,l_d=list(),l_g=list(),l_c=list()):
     # select supervised dataset
     X_sup, y_sup = select_supervised_samples(dataset)
     print(X_sup.shape, y_sup.shape)
