@@ -295,18 +295,18 @@ def summarize_performance(step, g_model, c_model, latent_dim, dataset, n_samples
     pyplot.close()
     # evaluate the classifier model
     X, y = dataset
-    # _, acc = c_model.evaluate(X, y, verbose=0)
-    # print('Classifier training Accuracy: %.3f%%' % (acc * 100))
+    _, acc = c_model.evaluate(X, y, verbose=0)
+    print('Classifier training Accuracy: %.3f%%' % (acc * 100))
     # #classification report of training:
-    # print(classification_report(y,np.argmax(c_model.predict(X, batch_size=2, verbose=1), axis=1)),'\n')
+    print(classification_report(y,np.argmax(c_model.predict(X, batch_size=2, verbose=1), axis=1)),'\n')
     _, acct = c_model.evaluate(xte, testY, verbose=0)
     print('Classifier validation Accuracy: %.3f%%' % (acct * 100))
     #classification report of validation test:
-    # print(classification_report(testY, np.argmax(c_model.predict(xte, batch_size=2, verbose=1), axis=1)),'\n')
+    print(classification_report(testY, np.argmax(c_model.predict(xte, batch_size=2, verbose=1), axis=1)),'\n')
 
 
 # train the generator and discriminator
-def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=20, n_batch=2,l_d=list(),l_g=list(),l_c=list()):
+def train(g_model, d_model, c_model, gan_model, dataset, latent_dim, n_epochs=100, n_batch=8,l_d=list(),l_g=list(),l_c=list()):
     # select supervised dataset
     X_sup, y_sup = select_supervised_samples(dataset)
     print(X_sup.shape, y_sup.shape)
