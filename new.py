@@ -100,7 +100,7 @@ def resnet_classifier(in_shape=(P,P,3)):
 aug = image.ImageDataGenerator(rotation_range=50, zoom_range=0.7,
 	horizontal_flip=True)
 
-BS=4
+BS=2
 EPOCHS= 50
 model=eff_classifier()
 lr=1e-6
