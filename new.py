@@ -103,7 +103,7 @@ aug = image.ImageDataGenerator(rotation_range=50, zoom_range=0.7,
 BS=4
 EPOCHS= 50
 model=eff_classifier()
-lr=1e-5
+lr=1e-6
 b1=0.8
 
 model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr,beta_1=b1) , metrics=['accuracy',tf.keras.metrics.AUC(),tf.keras.metrics.Precision(),tf.keras.metrics.Recall()]) 
@@ -132,4 +132,3 @@ plt.legend(['train', 'val'], loc='upper left')
 plt.show()
 plt.savefig('loss_history_xception')
 plt.close()
-
